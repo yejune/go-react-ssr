@@ -1,13 +1,13 @@
 package reactbuilder
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/buger/jsonparser"
 	esbuildApi "github.com/evanw/esbuild/pkg/api"
-	"github.com/natewong1313/go-react-ssr/internal/utils"
+	"github.com/yejune/go-react-ssr/internal/utils"
 )
 
 var loaders = map[string]esbuildApi.Loader{
@@ -104,19 +104,24 @@ func build(buildOptions esbuildApi.BuildOptions, isClient bool) (BuildResult, er
 	return br, nil
 }
 
+// metafileSchema represents the structure of esbuild metafile
+type metafileSchema struct {
+	Inputs map[string]interface{} `json:"inputs"`
+}
+
 // getDependencyPathsFromMetafile parses dependencies from esbuild metafile and returns the paths of the dependencies
 func getDependencyPathsFromMetafile(metafile string) []string {
+	var meta metafileSchema
+	if err := json.Unmarshal([]byte(metafile), &meta); err != nil {
+		return nil
+	}
+
 	var dependencyPaths []string
-	// Parse the metafile and get the paths of the dependencies
 	// Ignore dependencies in node_modules
-	err := jsonparser.ObjectEach([]byte(metafile), func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		if !strings.Contains(string(key), "/node_modules/") {
-			dependencyPaths = append(dependencyPaths, utils.GetFullFilePath(string(key)))
+	for key := range meta.Inputs {
+		if !strings.Contains(key, "/node_modules/") {
+			dependencyPaths = append(dependencyPaths, utils.GetFullFilePath(key))
 		}
-		return nil
-	}, "inputs")
-	if err != nil {
-		return nil
 	}
 	return dependencyPaths
 }

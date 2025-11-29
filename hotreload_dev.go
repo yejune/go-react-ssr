@@ -1,20 +1,23 @@
+//go:build !prod
+
 package go_ssr
 
 import (
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"github.com/gorilla/websocket"
-	"github.com/natewong1313/go-react-ssr/internal/utils"
-	"github.com/rs/zerolog"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/gorilla/websocket"
+	"github.com/yejune/go-react-ssr/internal/utils"
 )
 
 type HotReload struct {
 	engine           *Engine
-	logger           zerolog.Logger
+	logger           *slog.Logger
 	connectedClients map[string][]*websocket.Conn
 }
 
@@ -35,7 +38,7 @@ func (hr *HotReload) Start() {
 
 // startServer starts the hot reload websocket server
 func (hr *HotReload) startServer() {
-	hr.logger.Info().Msgf("Hot reload websocket running on port %d", hr.engine.Config.HotReloadServerPort)
+	hr.logger.Info("Hot reload websocket running", "port", hr.engine.Config.HotReloadServerPort)
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -44,18 +47,18 @@ func (hr *HotReload) startServer() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			hr.logger.Err(err).Msg("Failed to upgrade websocket")
+			hr.logger.Error("Failed to upgrade websocket", "error", err)
 			return
 		}
 		// Client should send routeID as first message
 		_, routeID, err := ws.ReadMessage()
 		if err != nil {
-			hr.logger.Err(err).Msg("Failed to read message from websocket")
+			hr.logger.Error("Failed to read message from websocket", "error", err)
 			return
 		}
 		err = ws.WriteMessage(1, []byte("Connected"))
 		if err != nil {
-			hr.logger.Err(err).Msg("Failed to write message to websocket")
+			hr.logger.Error("Failed to write message to websocket", "error", err)
 			return
 		}
 		// Add client to connectedClients
@@ -63,7 +66,7 @@ func (hr *HotReload) startServer() {
 	})
 	err := http.ListenAndServe(fmt.Sprintf(":%d", hr.engine.Config.HotReloadServerPort), nil)
 	if err != nil {
-		hr.logger.Err(err).Msg("Hot reload server quit unexpectedly")
+		hr.logger.Error("Hot reload server quit unexpectedly", "error", err)
 	}
 }
 
@@ -71,7 +74,7 @@ func (hr *HotReload) startServer() {
 func (hr *HotReload) startWatcher() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		hr.logger.Err(err).Msg("Failed to start watcher")
+		hr.logger.Error("Failed to start watcher", "error", err)
 		return
 	}
 	defer watcher.Close()
@@ -82,7 +85,7 @@ func (hr *HotReload) startWatcher() {
 		}
 		return nil
 	}); err != nil {
-		hr.logger.Err(err).Msg("Failed to add files in directory to watcher")
+		hr.logger.Error("Failed to add files in directory to watcher", "error", err)
 		return
 	}
 
@@ -92,7 +95,7 @@ func (hr *HotReload) startWatcher() {
 			// Watch for file created, deleted, updated, or renamed events
 			if event.Op.String() != "CHMOD" && !strings.Contains(event.Name, "gossr-temporary") {
 				filePath := utils.GetFullFilePath(event.Name)
-				hr.logger.Info().Msgf("File changed: %s, reloading", filePath)
+				hr.logger.Info("File changed, reloading", "file", filePath)
 				// Store the routes that need to be reloaded
 				var routeIDS []string
 				switch {
@@ -100,13 +103,13 @@ func (hr *HotReload) startWatcher() {
 					routeIDS = hr.engine.CacheManager.GetAllRouteIDS()
 				case hr.layoutCSSFileUpdated(filePath): // If the global css file has been updated, rebuild it and reload all routes
 					if err := hr.engine.BuildLayoutCSSFile(); err != nil {
-						hr.logger.Err(err).Msg("Failed to build global css file")
+						hr.logger.Error("Failed to build global css file", "error", err)
 						continue
 					}
 					routeIDS = hr.engine.CacheManager.GetAllRouteIDS()
 				case hr.needsTailwindRecompile(filePath): // If tailwind is enabled and a React file has been updated, rebuild the global css file and reload all routes
 					if err := hr.engine.BuildLayoutCSSFile(); err != nil {
-						hr.logger.Err(err).Msg("Failed to build global css file")
+						hr.logger.Error("Failed to build global css file", "error", err)
 						continue
 					}
 					fallthrough
@@ -125,7 +128,7 @@ func (hr *HotReload) startWatcher() {
 
 			}
 		case err := <-watcher.Errors:
-			hr.logger.Err(err).Msg("Error watching files")
+			hr.logger.Error("Error watching files", "error", err)
 		}
 	}
 }

@@ -2,15 +2,15 @@ package go_ssr
 
 import (
 	"fmt"
+	"log/slog"
 
-	"github.com/buke/quickjs-go"
-	"github.com/natewong1313/go-react-ssr/internal/reactbuilder"
-	"github.com/rs/zerolog"
+	"github.com/yejune/go-react-ssr/internal/jsruntime"
+	"github.com/yejune/go-react-ssr/internal/reactbuilder"
 )
 
 type renderTask struct {
 	engine             *Engine
-	logger             zerolog.Logger
+	logger             *slog.Logger
 	routeID            string
 	filePath           string
 	props              string
@@ -45,12 +45,12 @@ func (rt *renderTask) Start() (string, string, string, error) {
 	// Wait for both to finish
 	srResult := <-rt.serverRenderResult
 	if srResult.err != nil {
-		rt.logger.Error().Err(srResult.err).Msg("Failed to build for server")
+		rt.logger.Error("Failed to build for server", "error", srResult.err)
 		return "", "", "", srResult.err
 	}
 	crResult := <-rt.clientRenderResult
 	if crResult.err != nil {
-		rt.logger.Error().Err(crResult.err).Msg("Failed to build for client")
+		rt.logger.Error("Failed to build for client", "error", crResult.err)
 		return "", "", "", crResult.err
 	}
 
@@ -75,8 +75,8 @@ func (rt *renderTask) doRender(buildType string) {
 	// JS is built without props so that the props can be injected into cached JS builds
 	js := injectProps(build.JS, rt.props)
 	if buildType == "server" {
-		// Then call that file with node to get the rendered HTML
-		renderedHTML, err := renderReactToHTMLNew(js)
+		// Execute the JS using the pooled runtime
+		renderedHTML, err := rt.renderReactToHTML(js)
 		rt.serverRenderResult <- serverRenderResult{html: renderedHTML, css: build.CSS, err: err}
 	} else {
 		rt.clientRenderResult <- clientRenderResult{js: js, dependencies: build.Dependencies}
@@ -144,15 +144,12 @@ func injectProps(compiledJS, props string) string {
 	return fmt.Sprintf(`var props = %s; %s`, props, compiledJS)
 }
 
-// renderReactToHTML uses node to execute the server js file which outputs the rendered HTML
-func renderReactToHTMLNew(js string) (string, error) {
-	rt := quickjs.NewRuntime()
-	defer rt.Close()
-	ctx := rt.NewContext()
-	defer ctx.Close()
-	res, err := ctx.Eval(js)
-	if err != nil {
-		return "", err
-	}
-	return res.String(), nil
+// renderReactToHTML executes the server JS using the pooled runtime
+func (rt *renderTask) renderReactToHTML(js string) (string, error) {
+	return rt.engine.RuntimePool.Execute(js)
+}
+
+// renderReactToHTMLWithPool is a package-level function for backward compatibility
+func renderReactToHTMLWithPool(pool *jsruntime.Pool, js string) (string, error) {
+	return pool.Execute(js)
 }

@@ -1,10 +1,10 @@
 package go_ssr
 
 import (
+	"log/slog"
 	"os"
 	"testing"
 
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +41,7 @@ func TestEngine_BuildLayoutCSSFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.config.setFilePaths()
 			engine := &Engine{
-				Logger: zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger(),
+				Logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})),
 				Config: tt.config,
 			}
 			err = engine.BuildLayoutCSSFile()

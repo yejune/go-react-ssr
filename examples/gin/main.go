@@ -7,7 +7,7 @@ import (
 	"example.com/gin/models"
 
 	"github.com/gin-gonic/gin"
-	gossr "github.com/natewong1313/go-react-ssr"
+	gossr "github.com/yejune/go-react-ssr"
 )
 
 var APP_ENV string
@@ -17,13 +17,14 @@ func main() {
 	g.StaticFile("favicon.ico", "../frontend-tailwind/public/favicon.ico")
 	g.Static("/assets", "../frontend-tailwind/public")
 	engine, err := gossr.New(gossr.Config{
-		AppEnv:             APP_ENV,
-		AssetRoute:         "/assets",
-		FrontendDir:        "../frontend-tailwind/src",
-		GeneratedTypesPath: "../frontend-tailwind/src/generated.d.ts",
-		TailwindConfigPath: "../frontend-tailwind/tailwind.config.js",
-		LayoutCSSFilePath:  "Main.css",
-		PropsStructsPath:   "./models/props.go",
+		AppEnv:              APP_ENV,
+		AssetRoute:          "/assets",
+		FrontendDir:         "../frontend-tailwind/src",
+		GeneratedTypesPath:  "../frontend-tailwind/src/generated.d.ts",
+		TailwindConfigPath:  "../frontend-tailwind/tailwind.config.js",
+		LayoutCSSFilePath:   "Main.css",
+		PropsStructsPath:    "./models/props.go",
+		HotReloadServerPort: 3012,
 	})
 	if err != nil {
 		log.Fatal("Failed to init go-react-ssr")
@@ -42,5 +43,5 @@ func main() {
 			},
 		}))
 	})
-	g.Run()
+	g.Run(":8082")
 }
