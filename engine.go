@@ -19,6 +19,8 @@ type Engine struct {
 	RuntimePool             *jsruntime.Pool
 	CachedLayoutCSSFilePath string
 	CachedClientSPAJS       string // Cached client SPA bundle JS
+	CachedServerSPAJS       string // Cached server SPA bundle JS (for StaticRouter rendering)
+	CachedServerSPACSS      string // Cached server SPA bundle CSS
 }
 
 // IsProduction returns true if running in production mode
@@ -70,8 +72,16 @@ func New(config Config) (*Engine, error) {
 		}
 	}
 
-	// If using client SPA app, build it and cache it
+	// If using client SPA app, build bundles based on SPAHydrationMode
 	if config.ClientAppPath != "" {
+		if config.SPAHydrationMode == "router" {
+			// "router" mode: build server SPA bundle for StaticRouter rendering
+			if err = engine.buildServerSPAApp(); err != nil {
+				engine.Logger.Error("Failed to build server SPA app", "error", err)
+				return nil, err
+			}
+		}
+		// Both modes need client SPA bundle
 		if err = engine.buildClientSPAApp(); err != nil {
 			engine.Logger.Error("Failed to build client SPA app", "error", err)
 			return nil, err
@@ -113,14 +123,49 @@ func (engine *Engine) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+// buildServerSPAApp builds the server SPA app bundle (with StaticRouter for "router" mode)
+func (engine *Engine) buildServerSPAApp() error {
+	imports := []string{}
+	if engine.CachedLayoutCSSFilePath != "" {
+		imports = append(imports, `import "`+engine.CachedLayoutCSSFilePath+`";`)
+	}
+
+	buildContents, err := reactbuilder.GenerateServerSPABuildContents(imports, engine.Config.ClientAppPath, engine.Config.SPAHydrationMode)
+	if err != nil {
+		return err
+	}
+	if buildContents == "" {
+		// "replace" mode doesn't need server SPA build
+		return nil
+	}
+
+	result, err := reactbuilder.BuildServer(buildContents, engine.Config.FrontendDir, engine.Config.AssetRoute)
+	if err != nil {
+		return err
+	}
+
+	engine.CachedServerSPAJS = result.JS
+	engine.CachedServerSPACSS = result.CSS
+	// Debug: show last 500 chars of generated JS
+	jsLen := len(result.JS)
+	lastPart := result.JS
+	if jsLen > 500 {
+		lastPart = result.JS[jsLen-500:]
+	}
+	engine.Logger.Debug("Built server SPA app", "path", engine.Config.ClientAppPath, "mode", engine.Config.SPAHydrationMode, "jsLen", jsLen, "cssLen", len(result.CSS), "lastPart", lastPart)
+	return nil
+}
+
 // buildClientSPAApp builds the client SPA app bundle
+// "router" mode: uses hydrateRoot with BrowserRouter
+// "replace" mode: uses createRoot (backward compatible)
 func (engine *Engine) buildClientSPAApp() error {
 	imports := []string{}
 	if engine.CachedLayoutCSSFilePath != "" {
 		imports = append(imports, `import "`+engine.CachedLayoutCSSFilePath+`";`)
 	}
 
-	buildContents, err := reactbuilder.GenerateClientSPABuildContents(imports, engine.Config.ClientAppPath)
+	buildContents, err := reactbuilder.GenerateClientSPABuildContents(imports, engine.Config.ClientAppPath, engine.Config.SPAHydrationMode)
 	if err != nil {
 		return err
 	}
@@ -131,6 +176,6 @@ func (engine *Engine) buildClientSPAApp() error {
 	}
 
 	engine.CachedClientSPAJS = result.JS
-	engine.Logger.Debug("Built client SPA app", "path", engine.Config.ClientAppPath)
+	engine.Logger.Debug("Built client SPA app", "path", engine.Config.ClientAppPath, "mode", engine.Config.SPAHydrationMode)
 	return nil
 }

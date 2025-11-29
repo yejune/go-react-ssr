@@ -66,9 +66,20 @@ func (rt *renderTask) Start() (string, string, string, error) {
 }
 
 func (rt *renderTask) doRender(buildType string) {
-	// For client builds with ClientAppPath, use cached SPA bundle
+	// For SPA mode with ClientAppPath, use cached bundles
 	if buildType == "client" && rt.engine.CachedClientSPAJS != "" {
 		rt.clientRenderResult <- clientRenderResult{js: rt.engine.CachedClientSPAJS, dependencies: nil}
+		return
+	}
+	if buildType == "server" && rt.engine.CachedServerSPAJS != "" {
+		// Inject props with __requestPath for StaticRouter
+		js := injectSPAProps(rt.engine.CachedServerSPAJS, rt.config.RequestPath)
+		renderedHTML, err := rt.renderReactToHTML(js)
+		if err != nil {
+			rt.logger.Error("SPA server render error", "error", err, "requestPath", rt.config.RequestPath)
+		}
+		rt.logger.Debug("SPA server render result", "htmlLen", len(renderedHTML), "requestPath", rt.config.RequestPath)
+		rt.serverRenderResult <- serverRenderResult{html: renderedHTML, css: rt.engine.CachedServerSPACSS, err: err}
 		return
 	}
 
@@ -161,6 +172,11 @@ func (rt *renderTask) updateBuildCache(build reactbuilder.BuildResult, buildType
 // injectProps injects the props into the already compiled JS
 func injectProps(compiledJS, props string) string {
 	return fmt.Sprintf(`var props = %s; %s`, props, compiledJS)
+}
+
+// injectSPAProps injects props with __requestPath for SPA server rendering
+func injectSPAProps(compiledJS, requestPath string) string {
+	return fmt.Sprintf(`var props = { __requestPath: "%s" }; %s`, requestPath, compiledJS)
 }
 
 // renderReactToHTML executes the server JS using the pooled runtime

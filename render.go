@@ -13,10 +13,11 @@ import (
 
 // RenderConfig is the config for rendering a route
 type RenderConfig struct {
-	File     string
-	Title    string
-	MetaTags map[string]string
-	Props    interface{}
+	File        string
+	Title       string
+	MetaTags    map[string]string
+	Props       interface{}
+	RequestPath string // Current request URL path for SPA routing (e.g., "/board/1")
 }
 
 // RenderRoute renders a route to html
