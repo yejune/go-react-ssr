@@ -1,4 +1,4 @@
-module github.com/yejune/go-react-ssr
+module github.com/yejune/gotossr
 
 go 1.24.0
 

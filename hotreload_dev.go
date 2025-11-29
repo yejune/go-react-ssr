@@ -13,7 +13,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"
-	"github.com/yejune/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 type HotReload struct {

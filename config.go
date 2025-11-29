@@ -5,8 +5,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/yejune/go-react-ssr/internal/cache"
-	"github.com/yejune/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/cache"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 // Config is the config for starting the engine

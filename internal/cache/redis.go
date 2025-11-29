@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/yejune/go-react-ssr/internal/reactbuilder"
+	"github.com/yejune/gotossr/internal/reactbuilder"
 	"github.com/redis/go-redis/v9"
 )
 

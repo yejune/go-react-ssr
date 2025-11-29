@@ -5,7 +5,7 @@ package go_ssr
 import (
 	"os"
 
-	"github.com/yejune/go-react-ssr/internal/typeconverter"
+	"github.com/yejune/gotossr/internal/typeconverter"
 )
 
 // initDevTools initializes development tools (hot reload, type converter)

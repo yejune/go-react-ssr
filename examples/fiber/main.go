@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	gossr "github.com/yejune/go-react-ssr"
+	gossr "github.com/yejune/gotossr"
 )
 
 var APP_ENV string

@@ -1,16 +1,16 @@
-# Go React SSR
+# gotossr
 
-Go 기반 React 웹앱을 엔드투엔드 타입 안전성과 함께 구축하세요.
+Go로 React SSR을 간단하게. **"go to SSR"** — 그냥 가면 됩니다.
 
 ---
 
-[![Go Report](https://goreportcard.com/badge/github.com/yejune/go-react-ssr)](https://goreportcard.com/report/github.com/yejune/go-react-ssr)
-[![GoDoc](http://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://pkg.go.dev/github.com/yejune/go-react-ssr?tab=doc)
-[![MIT License](https://img.shields.io/badge/License-MIT%202.0-blue.svg)](https://github.com/yejune/go-react-ssr/blob/master/LICENSE)
+[![Go Report](https://goreportcard.com/badge/github.com/yejune/gotossr)](https://goreportcard.com/report/github.com/yejune/gotossr)
+[![GoDoc](http://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://pkg.go.dev/github.com/yejune/gotossr?tab=doc)
+[![MIT License](https://img.shields.io/badge/License-MIT%202.0-blue.svg)](https://github.com/yejune/gotossr/blob/master/LICENSE)
 
-Go-SSR은 **기존 Go 웹 프레임워크**에 드롭인 방식으로 추가하여 [React](https://react.dev/)를 **서버 사이드 렌더링**할 수 있게 해주는 플러그인입니다. [esbuild](https://esbuild.github.io/)로 구동되며 Go에서 React로 **타입 안전한** props 전달을 지원합니다.
+gotossr은 **기존 Go 웹 프레임워크**에 드롭인 방식으로 추가하여 [React](https://react.dev/)를 **서버 사이드 렌더링**할 수 있게 해주는 플러그인입니다. [esbuild](https://esbuild.github.io/)로 구동되며 Go에서 React로 **타입 안전한** props 전달을 지원합니다.
 
-Go-SSR은 기존 Go 생태계에서 풀스택 React 앱을 쉽게 구축할 수 있는 도구가 부족하여 개발되었습니다. [Remix](https://remix.run/)와 [Next.JS](https://nextjs.org/)에서 영감을 받았지만, 프레임워크가 아닌 플러그인을 목표로 합니다.
+gotossr은 기존 Go 생태계에서 풀스택 React 앱을 쉽게 구축할 수 있는 도구가 부족하여 개발되었습니다. [Remix](https://remix.run/)와 [Next.JS](https://nextjs.org/)에서 영감을 받았지만, 프레임워크가 아닌 플러그인을 목표로 합니다.
 
 # 주요 기능
 
@@ -26,14 +26,14 @@ Go-SSR은 기존 Go 생태계에서 풀스택 React 앱을 쉽게 구축할 수 
 
 # 시작하기
 
-Go-SSR은 설치가 매우 간단하도록 설계되었습니다.
+gotossr은 설치가 매우 간단하도록 설계되었습니다.
 
 ## CLI 도구 사용
 
 가장 쉽게 프로젝트를 시작하는 방법입니다.
 
 ```console
-$ go install github.com/yejune/go-react-ssr/gossr-cli@latest
+$ go install github.com/yejune/gotossr/gossr-cli@latest
 $ gossr-cli create
 ```
 
@@ -42,14 +42,14 @@ $ gossr-cli create
 ## 기존 웹 서버에 추가
 
 ```console
-$ go get -u github.com/yejune/go-react-ssr
+$ go get -u github.com/yejune/gotossr
 ```
 
 메인 파일에 import 추가:
 
 ```go
 import (
-    gossr "github.com/yejune/go-react-ssr"
+    gossr "github.com/yejune/gotossr"
 )
 ```
 
@@ -101,7 +101,7 @@ g.GET("/", func(c *gin.Context) {
 
 # 성능
 
-Go-SSR은 두 가지 JavaScript 런타임을 지원합니다:
+gotossr은 두 가지 JavaScript 런타임을 지원합니다:
 
 | 런타임 | Build Tag | 성능 | 사용 케이스 |
 |--------|-----------|------|------------|
@@ -121,7 +121,7 @@ Go-SSR은 두 가지 JavaScript 런타임을 지원합니다:
 
 # Build Tags
 
-Go-SSR은 build tag를 사용하여 프로덕션에서 의존성을 최소화합니다:
+gotossr은 build tag를 사용하여 프로덕션에서 의존성을 최소화합니다:
 
 | 빌드 명령 | 런타임 | Dev 기능 | 의존성 |
 |-----------|--------|----------|--------|
@@ -214,7 +214,7 @@ CMD ["./main"]
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      go-react-ssr 엔진                           │
+│                      gotossr 엔진                           │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │   esbuild   │  │  JS 런타임  │  │       캐시 매니저        │  │
 │  │  (번들러)   │  │  풀 (V8/    │  │  (인메모리, 라우트별)    │  │
@@ -240,7 +240,7 @@ CMD ["./main"]
    - JS 런타임이 즉시 실행 (~10-25ms)
    - 번들링 오버헤드 없음
 
-# Next.js + Go vs go-react-ssr 비교
+# Next.js + Go vs gotossr 비교
 
 ### 아키텍처 비교
 
@@ -254,7 +254,7 @@ CMD ["./main"]
 - 요청당 네트워크 홉 4회
 - 높은 인프라 비용
 
-**go-react-ssr (단일 서버):**
+**gotossr (단일 서버):**
 ```
 브라우저 ──▶ Go 서버 (SSR + API) ──▶ DB
             Port 8080
@@ -266,7 +266,7 @@ CMD ["./main"]
 
 ### 성능 비교
 
-| 메트릭 | Next.js + Go | go-react-ssr (V8) |
+| 메트릭 | Next.js + Go | gotossr (V8) |
 |--------|-------------|-------------------|
 | SSR 레이턴시 | 5-20ms | 10-30ms |
 | 내부 API 호출 | 5-10ms | 0ms (불필요) |
@@ -277,7 +277,7 @@ CMD ["./main"]
 
 ### 월간 인프라 비용 (AWS 기준)
 
-| 항목 | Next.js + Go | go-react-ssr |
+| 항목 | Next.js + Go | gotossr |
 |------|-------------|--------------|
 | EC2 인스턴스 | $50-80 (2대) | $20-30 (1대) |
 | 로드밸런서 | $40 (2개) | $20 (1개) |
@@ -287,7 +287,7 @@ CMD ["./main"]
 
 ### 기능 비교
 
-| 기능 | go-react-ssr | Next.js |
+| 기능 | gotossr | Next.js |
 |------|--------------|---------|
 | SSR | ✅ | ✅ |
 | SSG/ISR | ❌ | ✅ |
@@ -299,7 +299,7 @@ CMD ["./main"]
 
 ### 사용 권장
 
-**go-react-ssr 권장:**
+**gotossr 권장:**
 - SSR이 필요한 기존 Go 백엔드
 - 내부 도구 / 관리자 대시보드
 - B2B 애플리케이션
@@ -326,7 +326,7 @@ CMD ["./main"]
 
 ### 캐싱 옵션
 
-go-react-ssr은 esbuild 번들 결과를 캐시하여 매 요청마다 재번들링을 방지합니다.
+gotossr은 esbuild 번들 결과를 캐시하여 매 요청마다 재번들링을 방지합니다.
 
 | 캐시 타입 | 사용 케이스 | 설정 |
 |----------|------------|------|
@@ -370,7 +370,7 @@ import (
     "syscall"
     "time"
 
-    gossr "github.com/yejune/go-react-ssr"
+    gossr "github.com/yejune/gotossr"
 )
 
 func main() {
@@ -408,7 +408,7 @@ func main() {
 }
 ```
 
-# 마이그레이션 가이드: go-react-ssr → Next.js
+# 마이그레이션 가이드: gotossr → Next.js
 
 트래픽이 일 10만 요청을 초과하거나 SSG, ISR, 스트리밍 SSR 등 고급 기능이 필요할 때 Next.js로 마이그레이션하세요.
 
@@ -426,7 +426,7 @@ your-project/
 ├── frontend-nextjs/     # 새 Next.js 프론트엔드
 │   ├── app/
 │   └── package.json
-└── frontend/            # 기존 go-react-ssr 프론트엔드 (마이그레이션 대상)
+└── frontend/            # 기존 gotossr 프론트엔드 (마이그레이션 대상)
 ```
 
 ### 2단계: React 컴포넌트 복사
@@ -441,7 +441,7 @@ cp -r frontend/src/*.tsx frontend-nextjs/app/
 
 ### 3단계: Props를 데이터 페칭으로 변환
 
-**변경 전 (go-react-ssr):**
+**변경 전 (gotossr):**
 ```go
 // Go 핸들러
 func HomeHandler(c *gin.Context) {
@@ -495,7 +495,7 @@ func main() {
         api.GET("/users/:id", getUser)
     }
 
-    // 기존: 마이그레이션 중 go-react-ssr 라우트 유지
+    // 기존: 마이그레이션 중 gotossr 라우트 유지
     r.GET("/", homeHandler)
 
     r.Run(":8080")
@@ -526,7 +526,7 @@ server {
         proxy_pass http://nextjs;
     }
 
-    # 기존 페이지 → go-react-ssr (마이그레이션 전까지)
+    # 기존 페이지 → gotossr (마이그레이션 전까지)
     location / {
         proxy_pass http://go;
     }
@@ -592,7 +592,7 @@ npx openapi-generator-cli generate \
 ```markdown
 ## 페이지 마이그레이션 추적
 
-| 페이지 | go-react-ssr | Next.js | 검증 |
+| 페이지 | gotossr | Next.js | 검증 |
 |--------|-------------|---------|------|
 | / (홈) | ✅ | ⬜ | ⬜ |
 | /products | ✅ | ⬜ | ⬜ |
@@ -625,7 +625,7 @@ npx openapi-generator-cli generate \
 문제 발생 시 롤백은 간단합니다:
 
 ```nginx
-# nginx.conf - go-react-ssr로 롤백
+# nginx.conf - gotossr로 롤백
 location / {
     proxy_pass http://go;  # 모든 트래픽을 Go로
 }
@@ -633,7 +633,7 @@ location / {
 
 # CSS 프레임워크 지원
 
-Go-SSR은 다양한 CSS 프레임워크를 지원합니다:
+gotossr은 다양한 CSS 프레임워크를 지원합니다:
 
 ### Tailwind CSS v4
 

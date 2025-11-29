@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/yejune/go-react-ssr/gossr-cli/utils"
+	"github.com/yejune/gotossr/gossr-cli/utils"
 )
 
 func CheckNeedsUpdate() bool {

@@ -7,8 +7,8 @@ import (
 	"html/template"
 	"path/filepath"
 
-	"github.com/yejune/go-react-ssr/internal/html"
-	"github.com/yejune/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/html"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 // RenderConfig is the config for rendering a route

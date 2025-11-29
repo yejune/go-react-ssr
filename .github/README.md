@@ -1,22 +1,21 @@
-<!-- # Go React SSR -->
+# gotossr
 
-<!-- Build Go powered React web apps with end to end type-safety -->
-<img src="https://i.imgur.com/zrKSrny.png" height="72">
+React SSR made simple with Go. **"go to SSR"** — just go.
 
 ---
 
 <p>
-    <a href="https://goreportcard.com/report/github.com/yejune/go-react-ssr"><img src="https://goreportcard.com/badge/github.com/yejune/go-react-ssr" alt="Go Report"></a>
-    <a href="https://pkg.go.dev/github.com/yejune/go-react-ssr?tab=doc"><img src="http://img.shields.io/badge/GoDoc-Reference-blue.svg" alt="GoDoc"></a>
-    <a href="https://github.com/yejune/go-react-ssr/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT%202.0-blue.svg" alt="MIT License"></a>
+    <a href="https://goreportcard.com/report/github.com/yejune/gotossr"><img src="https://goreportcard.com/badge/github.com/yejune/gotossr" alt="Go Report"></a>
+    <a href="https://pkg.go.dev/github.com/yejune/gotossr?tab=doc"><img src="http://img.shields.io/badge/GoDoc-Reference-blue.svg" alt="GoDoc"></a>
+    <a href="https://github.com/yejune/gotossr/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT%202.0-blue.svg" alt="MIT License"></a>
 </p>
 
-Go-SSR is a drop in plugin to **any** existing Go web framework to allow **server rendering** [React](https://react.dev/). It's powered by [esbuild](https://esbuild.github.io/) and allows for passing props from Go to React with **type safety**.
+gotossr is a drop in plugin to **any** existing Go web framework to allow **server rendering** [React](https://react.dev/). It's powered by [esbuild](https://esbuild.github.io/) and allows for passing props from Go to React with **type safety**.
 
 <!--
 # 💡 Overview -->
 
-Go-SSR was developed due to a lack of an existing product in the Go ecosystem that made it easy to build full-stack React apps. At the time, most Go web app projects were either built with a static React frontend with lots of client-side logic or html templates. I envisioned creating a new solution that would allow you to create full-stack Go apps with React but with logic being moved to the server and being able to pass that logic down with type-safe props. This project was inspired by [Remix](https://remix.run/) and [Next.JS](https://nextjs.org/), but aims to be a plugin and not a framework.
+gotossr was developed due to a lack of an existing product in the Go ecosystem that made it easy to build full-stack React apps. At the time, most Go web app projects were either built with a static React frontend with lots of client-side logic or html templates. I envisioned creating a new solution that would allow you to create full-stack Go apps with React but with logic being moved to the server and being able to pass that logic down with type-safe props. This project was inspired by [Remix](https://remix.run/) and [Next.JS](https://nextjs.org/), but aims to be a plugin and not a framework.
 
 # 📜 Features
 
@@ -34,7 +33,7 @@ Go-SSR was developed due to a lack of an existing product in the Go ecosystem th
 
 # 🛠️ Getting Started
 
-Go-SSR was designed with the idea of being dead simple to install. Below are 2 easy ways of setting it up:
+gotossr was designed with the idea of being dead simple to install. Below are 2 easy ways of setting it up:
 
 ## ⚡️ Using the CLI tool
 
@@ -43,7 +42,7 @@ Go-SSR was designed with the idea of being dead simple to install. Below are 2 e
 The easiest way to get a project up and running is by using the command line tool. Install it with the following command
 
 ```console
-$ go install github.com/yejune/go-react-ssr/gossr-cli@latest
+$ go install github.com/yejune/gotossr/gossr-cli@latest
 ```
 
 Then you can call the following command to create a project
@@ -56,10 +55,10 @@ You'll be prompted the path to place the project, what web framework you want to
 
 ## 📝 Add to existing web server
 
-To add Go-SSR to an existing Go web server, take a look at the [examples](/examples) folder to get an idea of what a project looks like. In general, you'll want to follow these commands:
+To add gotossr to an existing Go web server, take a look at the [examples](/examples) folder to get an idea of what a project looks like. In general, you'll want to follow these commands:
 
 ```console
-$ go get -u github.com/yejune/go-react-ssr
+$ go get -u github.com/yejune/gotossr
 ```
 
 Then, add imports into your main file
@@ -67,7 +66,7 @@ Then, add imports into your main file
 ```go
 import (
 	...
-	gossr "github.com/yejune/go-react-ssr"
+	gossr "github.com/yejune/gotossr"
 )
 ```
 
@@ -119,7 +118,7 @@ g.GET("/", func(c *gin.Context) {
 
 # ⚡ Performance
 
-Go-SSR supports two JavaScript runtimes:
+gotossr supports two JavaScript runtimes:
 
 | Runtime | Build Tag | Performance | Use Case |
 |---------|-----------|-------------|----------|
@@ -139,7 +138,7 @@ Parallel (10 cores)       49μs        26μs       +85%
 
 # 🏗️ Build Tags
 
-Go-SSR uses build tags to minimize dependencies in production:
+gotossr uses build tags to minimize dependencies in production:
 
 | Build Command | Runtime | Dev Features | Dependencies |
 |---------------|---------|--------------|--------------|
@@ -233,7 +232,7 @@ Go SSR has been tested and deployed on the following platforms:
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      go-react-ssr Engine                         │
+│                      gotossr Engine                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │   esbuild   │  │  JS Runtime │  │       Cache Manager     │  │
 │  │  (bundler)  │  │  Pool (V8/  │  │  (in-memory, per-route) │  │
@@ -259,7 +258,7 @@ Go SSR has been tested and deployed on the following platforms:
    - JS runtime executes immediately (~10-25ms)
    - No bundling overhead
 
-# 📊 Comparison: go-react-ssr vs Next.js + Go
+# 📊 Comparison: gotossr vs Next.js + Go
 
 ### Architecture Comparison
 
@@ -273,7 +272,7 @@ Browser ──▶ Next.js (SSR) ──▶ Go API ──▶ Database
 - 4 network hops per request
 - Higher infrastructure cost
 
-**go-react-ssr (Single Server):**
+**gotossr (Single Server):**
 ```
 Browser ──▶ Go Server (SSR + API) ──▶ Database
            Port 8080
@@ -285,7 +284,7 @@ Browser ──▶ Go Server (SSR + API) ──▶ Database
 
 ### Performance Comparison
 
-| Metric | Next.js + Go | go-react-ssr (V8) |
+| Metric | Next.js + Go | gotossr (V8) |
 |--------|-------------|-------------------|
 | SSR Latency | 5-20ms | 10-30ms |
 | Internal API Call | 5-10ms | 0ms (not needed) |
@@ -296,7 +295,7 @@ Browser ──▶ Go Server (SSR + API) ──▶ Database
 
 ### Monthly Infrastructure Cost (AWS)
 
-| Item | Next.js + Go | go-react-ssr |
+| Item | Next.js + Go | gotossr |
 |------|-------------|--------------|
 | EC2 Instances | $50-80 (2x) | $20-30 (1x) |
 | Load Balancers | $40 (2x) | $20 (1x) |
@@ -306,7 +305,7 @@ Browser ──▶ Go Server (SSR + API) ──▶ Database
 
 ### Feature Comparison
 
-| Feature | go-react-ssr | Next.js |
+| Feature | gotossr | Next.js |
 |---------|--------------|---------|
 | SSR | ✅ | ✅ |
 | SSG/ISR | ❌ | ✅ |
@@ -316,7 +315,7 @@ Browser ──▶ Go Server (SSR + API) ──▶ Database
 | Single Deployment | ✅ | ❌ |
 | Memory Efficiency | ✅ | ❌ |
 
-### When to Use go-react-ssr
+### When to Use gotossr
 
 ✅ **Recommended:**
 - Existing Go backend that needs SSR
@@ -345,7 +344,7 @@ Browser ──▶ Go Server (SSR + API) ──▶ Database
 
 ### Caching Options
 
-go-react-ssr caches esbuild bundle results to avoid re-bundling on every request.
+gotossr caches esbuild bundle results to avoid re-bundling on every request.
 
 | Cache Type | Use Case | Configuration |
 |------------|----------|---------------|
@@ -389,7 +388,7 @@ import (
     "syscall"
     "time"
 
-    gossr "github.com/yejune/go-react-ssr"
+    gossr "github.com/yejune/gotossr"
 )
 
 func main() {
@@ -428,12 +427,12 @@ func main() {
     // Shutdown HTTP server
     srv.Shutdown(ctx)
 
-    // Shutdown go-react-ssr engine (releases runtime pool, clears cache)
+    // Shutdown gotossr engine (releases runtime pool, clears cache)
     engine.Shutdown(ctx)
 }
 ```
 
-# 🔄 Migration Guide: go-react-ssr → Next.js
+# 🔄 Migration Guide: gotossr → Next.js
 
 When your traffic exceeds 100k req/day or you need advanced features (SSG, ISR, Streaming SSR), migrate to Next.js with this guide.
 
@@ -451,7 +450,7 @@ your-project/
 ├── frontend-nextjs/     # New Next.js frontend
 │   ├── app/
 │   └── package.json
-└── frontend/            # Old go-react-ssr frontend (to migrate)
+└── frontend/            # Old gotossr frontend (to migrate)
 ```
 
 ### Step 2: Copy React Components
@@ -466,7 +465,7 @@ cp -r frontend/src/*.tsx frontend-nextjs/app/
 
 ### Step 3: Convert Props to Data Fetching
 
-**Before (go-react-ssr):**
+**Before (gotossr):**
 ```go
 // Go handler
 func HomeHandler(c *gin.Context) {
@@ -520,7 +519,7 @@ func main() {
         api.GET("/users/:id", getUser)
     }
 
-    // Old: Keep go-react-ssr routes during migration
+    // Old: Keep gotossr routes during migration
     r.GET("/", homeHandler)
 
     r.Run(":8080")
@@ -551,7 +550,7 @@ server {
         proxy_pass http://nextjs;
     }
 
-    # Old pages → go-react-ssr (until migrated)
+    # Old pages → gotossr (until migrated)
     location / {
         proxy_pass http://go;
     }
@@ -618,7 +617,7 @@ npx openapi-generator-cli generate \
 ```markdown
 ## Page Migration Tracker
 
-| Page | go-react-ssr | Next.js | Verified |
+| Page | gotossr | Next.js | Verified |
 |------|-------------|---------|----------|
 | / (Home) | ✅ | ⬜ | ⬜ |
 | /products | ✅ | ⬜ | ⬜ |
@@ -651,7 +650,7 @@ npx openapi-generator-cli generate \
 If issues arise, rollback is simple:
 
 ```nginx
-# nginx.conf - Rollback to go-react-ssr
+# nginx.conf - Rollback to gotossr
 location / {
     proxy_pass http://go;  # All traffic back to Go
 }
@@ -659,7 +658,7 @@ location / {
 
 # 🎨 CSS Framework Support
 
-Go-SSR supports multiple CSS frameworks out of the box:
+gotossr supports multiple CSS frameworks out of the box:
 
 ### Tailwind CSS v4
 

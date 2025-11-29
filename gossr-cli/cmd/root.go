@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/yejune/go-react-ssr/gossr-cli/logger"
+	"github.com/yejune/gotossr/gossr-cli/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,7 @@ var RootCmd = &cobra.Command{
 	Use:   "gossr-cli",
 	Short: "This application helps you get a go-react-ssr powered app up and running in no time.",
 	Long: `This application helps you get a go-react-ssr powered app up and running in no time.
-	Complete documentation is available at https://github.com/yejune/go-react-ssr`,
+	Complete documentation is available at https://github.com/yejune/gotossr`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

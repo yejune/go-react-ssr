@@ -5,9 +5,9 @@ import (
 
 	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
-	"github.com/yejune/go-react-ssr/gossr-cli/cmd"
-	_ "github.com/yejune/go-react-ssr/gossr-cli/cmd/create"
-	"github.com/yejune/go-react-ssr/gossr-cli/cmd/update"
+	"github.com/yejune/gotossr/gossr-cli/cmd"
+	_ "github.com/yejune/gotossr/gossr-cli/cmd/create"
+	"github.com/yejune/gotossr/gossr-cli/cmd/update"
 )
 
 func main() {

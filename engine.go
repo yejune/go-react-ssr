@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/yejune/go-react-ssr/internal/cache"
-	"github.com/yejune/go-react-ssr/internal/jsruntime"
-	"github.com/yejune/go-react-ssr/internal/reactbuilder"
-	"github.com/yejune/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/cache"
+	"github.com/yejune/gotossr/internal/jsruntime"
+	"github.com/yejune/gotossr/internal/reactbuilder"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 type Engine struct {

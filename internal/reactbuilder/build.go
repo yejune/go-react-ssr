@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	esbuildApi "github.com/evanw/esbuild/pkg/api"
-	"github.com/yejune/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 var loaders = map[string]esbuildApi.Loader{

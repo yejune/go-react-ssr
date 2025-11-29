@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/yejune/go-react-ssr/internal/reactbuilder"
+	"github.com/yejune/gotossr/internal/reactbuilder"
 )
 
 // Cache defines the interface for build caching
