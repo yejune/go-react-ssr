@@ -5,5 +5,4 @@ use (
 	./examples/echo
 	./examples/fiber
 	./examples/gin
-	./gossr-cli
 )

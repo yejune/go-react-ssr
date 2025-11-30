@@ -38,9 +38,11 @@ gotossr is a drop in plugin to **any** existing Go web framework to allow **serv
 ## ⚡️ Using the CLI tool
 
 ```console
-$ go install github.com/yejune/gotossr/gossr-cli@latest
-$ gossr-cli create
+$ go install github.com/yejune/gotossr-cli@latest
+$ gotossr-cli create
 ```
+
+See [gotossr-cli](https://github.com/yejune/gotossr-cli) for more details.
 
 ## 📝 Add to existing web server
 
