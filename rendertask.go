@@ -2,15 +2,15 @@ package go_ssr
 
 import (
 	"fmt"
+	"log/slog"
 
-	"github.com/buke/quickjs-go"
-	"github.com/natewong1313/go-react-ssr/internal/reactbuilder"
-	"github.com/rs/zerolog"
+	"github.com/yejune/gotossr/internal/jsruntime"
+	"github.com/yejune/gotossr/internal/reactbuilder"
 )
 
 type renderTask struct {
 	engine             *Engine
-	logger             zerolog.Logger
+	logger             *slog.Logger
 	routeID            string
 	filePath           string
 	props              string
@@ -36,7 +36,9 @@ func (rt *renderTask) Start() (string, string, string, error) {
 	rt.serverRenderResult = make(chan serverRenderResult)
 	rt.clientRenderResult = make(chan clientRenderResult)
 	// Assigns the parent file to the routeID so that the cache can be invalidated when the parent file changes
-	rt.engine.CacheManager.SetParentFile(rt.routeID, rt.filePath)
+	if err := rt.engine.Cache.SetParentFile(rt.routeID, rt.filePath); err != nil {
+		rt.logger.Error("Failed to set parent file", "error", err)
+	}
 
 	// Render for server and client concurrently
 	go rt.doRender("server")
@@ -45,23 +47,47 @@ func (rt *renderTask) Start() (string, string, string, error) {
 	// Wait for both to finish
 	srResult := <-rt.serverRenderResult
 	if srResult.err != nil {
-		rt.logger.Error().Err(srResult.err).Msg("Failed to build for server")
+		rt.logger.Error("Failed to build for server", "error", srResult.err)
 		return "", "", "", srResult.err
 	}
 	crResult := <-rt.clientRenderResult
 	if crResult.err != nil {
-		rt.logger.Error().Err(crResult.err).Msg("Failed to build for client")
+		rt.logger.Error("Failed to build for client", "error", crResult.err)
 		return "", "", "", crResult.err
 	}
 
 	// Set the parent file dependencies so that the cache can be invalidated a dependency changes
-	go rt.engine.CacheManager.SetParentFileDependencies(rt.filePath, crResult.dependencies)
+	go func() {
+		if err := rt.engine.Cache.SetParentFileDependencies(rt.filePath, crResult.dependencies); err != nil {
+			rt.logger.Error("Failed to set parent file dependencies", "error", err)
+		}
+	}()
 	return srResult.html, srResult.css, crResult.js, nil
 }
 
 func (rt *renderTask) doRender(buildType string) {
+	// For SPA mode with ClientAppPath, use cached bundles
+	if buildType == "client" && rt.engine.CachedClientSPAJS != "" {
+		rt.clientRenderResult <- clientRenderResult{js: rt.engine.CachedClientSPAJS, dependencies: nil}
+		return
+	}
+	if buildType == "server" && rt.engine.CachedServerSPAJS != "" {
+		// Use cached bundle with props injection for optimal performance
+		propsJSON := fmt.Sprintf(`{ "__requestPath": "%s" }`, rt.config.RequestPath)
+		renderedHTML, err := rt.renderReactToHTMLWithProps(rt.engine.CachedServerSPAJS, propsJSON)
+		if err != nil {
+			rt.logger.Error("SPA server render error", "error", err, "requestPath", rt.config.RequestPath)
+		}
+		rt.logger.Debug("SPA server render result", "htmlLen", len(renderedHTML), "requestPath", rt.config.RequestPath)
+		rt.serverRenderResult <- serverRenderResult{html: renderedHTML, css: rt.engine.CachedServerSPACSS, err: err}
+		return
+	}
+
 	// Check if the build is in the cache
-	build, buildFound := rt.getBuildFromCache(buildType)
+	build, buildFound, err := rt.getBuildFromCache(buildType)
+	if err != nil {
+		rt.logger.Error("Failed to get build from cache", "error", err, "buildType", buildType)
+	}
 	if !buildFound {
 		// Build the file if it's not in the cache
 		newBuild, err := rt.buildFile(buildType)
@@ -75,8 +101,8 @@ func (rt *renderTask) doRender(buildType string) {
 	// JS is built without props so that the props can be injected into cached JS builds
 	js := injectProps(build.JS, rt.props)
 	if buildType == "server" {
-		// Then call that file with node to get the rendered HTML
-		renderedHTML, err := renderReactToHTMLNew(js)
+		// Execute the JS using the pooled runtime
+		renderedHTML, err := rt.renderReactToHTML(js)
 		rt.serverRenderResult <- serverRenderResult{html: renderedHTML, css: build.CSS, err: err}
 	} else {
 		rt.clientRenderResult <- clientRenderResult{js: js, dependencies: build.Dependencies}
@@ -84,11 +110,11 @@ func (rt *renderTask) doRender(buildType string) {
 }
 
 // getBuild returns the build from the cache if it exists
-func (rt *renderTask) getBuildFromCache(buildType string) (reactbuilder.BuildResult, bool) {
+func (rt *renderTask) getBuildFromCache(buildType string) (reactbuilder.BuildResult, bool, error) {
 	if buildType == "server" {
-		return rt.engine.CacheManager.GetServerBuild(rt.filePath)
+		return rt.engine.Cache.GetServerBuild(rt.filePath)
 	} else {
-		return rt.engine.CacheManager.GetClientBuild(rt.filePath)
+		return rt.engine.Cache.GetClientBuild(rt.filePath)
 	}
 }
 
@@ -101,7 +127,7 @@ func (rt *renderTask) buildFile(buildType string) (reactbuilder.BuildResult, err
 	if buildType == "server" {
 		return reactbuilder.BuildServer(buildContents, rt.engine.Config.FrontendDir, rt.engine.Config.AssetRoute)
 	} else {
-		return reactbuilder.BuildClient(buildContents, rt.engine.Config.FrontendDir, rt.engine.Config.AssetRoute)
+		return reactbuilder.BuildClient(buildContents, rt.engine.Config.FrontendDir, rt.engine.Config.AssetRoute, rt.engine.IsProduction())
 	}
 }
 
@@ -132,10 +158,14 @@ func (rt *renderTask) handleBuildError(err error, buildType string) {
 
 // updateBuildCache updates the cache with the new build
 func (rt *renderTask) updateBuildCache(build reactbuilder.BuildResult, buildType string) {
+	var err error
 	if buildType == "server" {
-		rt.engine.CacheManager.SetServerBuild(rt.filePath, build)
+		err = rt.engine.Cache.SetServerBuild(rt.filePath, build)
 	} else {
-		rt.engine.CacheManager.SetClientBuild(rt.filePath, build)
+		err = rt.engine.Cache.SetClientBuild(rt.filePath, build)
+	}
+	if err != nil {
+		rt.logger.Error("Failed to update build cache", "error", err, "buildType", buildType)
 	}
 }
 
@@ -144,15 +174,23 @@ func injectProps(compiledJS, props string) string {
 	return fmt.Sprintf(`var props = %s; %s`, props, compiledJS)
 }
 
-// renderReactToHTML uses node to execute the server js file which outputs the rendered HTML
-func renderReactToHTMLNew(js string) (string, error) {
-	rt := quickjs.NewRuntime()
-	defer rt.Close()
-	ctx := rt.NewContext()
-	defer ctx.Close()
-	res, err := ctx.Eval(js)
-	if err != nil {
-		return "", err
-	}
-	return res.String(), nil
+// injectSPAProps injects props with __requestPath for SPA server rendering
+func injectSPAProps(compiledJS, requestPath string) string {
+	return fmt.Sprintf(`var props = { __requestPath: "%s" }; %s`, requestPath, compiledJS)
+}
+
+// renderReactToHTML executes the server JS using the pooled runtime
+func (rt *renderTask) renderReactToHTML(js string) (string, error) {
+	return rt.engine.RuntimePool.Execute(js)
+}
+
+// renderReactToHTMLWithProps executes the server JS with cached bundle + props
+// The bundle is compiled once and cached; only props change per request
+func (rt *renderTask) renderReactToHTMLWithProps(bundle, propsJSON string) (string, error) {
+	return rt.engine.RuntimePool.ExecuteWithProps(bundle, propsJSON)
+}
+
+// renderReactToHTMLWithPool is a package-level function for backward compatibility
+func renderReactToHTMLWithPool(pool *jsruntime.Pool, js string) (string, error) {
+	return pool.Execute(js)
 }

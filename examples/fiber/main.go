@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	gossr "github.com/natewong1313/go-react-ssr"
+	gossr "github.com/yejune/gotossr"
 )
 
 var APP_ENV string
@@ -23,11 +23,12 @@ func main() {
 	app.Static("/assets", "../frontend/public/")
 
 	engine, err := gossr.New(gossr.Config{
-		AppEnv:             APP_ENV,
-		AssetRoute:         "/assets",
-		FrontendDir:        "../frontend/src",
-		GeneratedTypesPath: "../frontend/src/generated.d.ts",
-		PropsStructsPath:   "./models/props.go",
+		AppEnv:              APP_ENV,
+		AssetRoute:          "/assets",
+		FrontendDir:         "../frontend/src",
+		GeneratedTypesPath:  "../frontend/src/generated.d.ts",
+		PropsStructsPath:    "./models/props.go",
+		HotReloadServerPort: 3011,
 	})
 	if err != nil {
 		log.Fatal("Failed to init go-react-ssr")
@@ -49,5 +50,5 @@ func main() {
 		return c.SendString(string(response))
 	})
 
-	app.Listen(":8080")
+	app.Listen(":8081")
 }

@@ -4,7 +4,7 @@ import (
 	"example.com/echo/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	gossr "github.com/natewong1313/go-react-ssr"
+	gossr "github.com/yejune/gotossr"
 	"log"
 	"math/rand"
 	"net/http"
@@ -18,12 +18,14 @@ func main() {
 	e.Static("/assets", "../frontend-mui/public/")
 
 	engine, err := gossr.New(gossr.Config{
-		AppEnv:             APP_ENV,
-		AssetRoute:         "/assets",
-		FrontendDir:        "../frontend-mui/src",
-		GeneratedTypesPath: "../frontend-mui/src/generated.d.ts",
-		PropsStructsPath:   "./models/props.go",
-		LayoutFilePath:     "Layout.tsx",
+		AppEnv:              APP_ENV,
+		AssetRoute:          "/assets",
+		FrontendDir:         "../frontend-mui/src",
+		GeneratedTypesPath:  "../frontend-mui/src/generated.d.ts",
+		PropsStructsPath:    "./models/props.go",
+		LayoutFilePath:      "Layout.tsx",
+		HotReloadServerPort: 3013,
+		JSRuntimePoolSize:   50,
 	})
 	if err != nil {
 		log.Fatal("Failed to init go-react-ssr")
@@ -44,5 +46,5 @@ func main() {
 		return c.HTML(http.StatusOK, string(response))
 	})
 
-	e.Start(":8080")
+	e.Start(":8083")
 }

@@ -1,6 +1,7 @@
 package go_ssr
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,8 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/buger/jsonparser"
-	"github.com/natewong1313/go-react-ssr/internal/utils"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 // BuildLayoutCSSFile builds the layout css file if it exists
@@ -28,7 +28,7 @@ func (engine *Engine) BuildLayoutCSSFile() error {
 		engine.CachedLayoutCSSFilePath = cachedCSSFilePath
 	}
 	if engine.Config.TailwindConfigPath != "" {
-		engine.Logger.Debug().Msg("Building css file with tailwind")
+		engine.Logger.Debug("Building css file with tailwind")
 		return engine.buildCSSWithTailwind()
 	}
 	return nil
@@ -67,7 +67,7 @@ func (engine *Engine) buildCSSWithTailwind() error {
 		executablePath := filepath.Join(executableDir, executableName)
 		// check if the executable has already been installed
 		if _, err := os.Stat(executablePath); os.IsNotExist(err) {
-			engine.Logger.Debug().Msgf("Downloading tailwind executable to %s", executablePath)
+			engine.Logger.Debug("Downloading tailwind executable", "path", executablePath)
 			if err = engine.downloadTailwindExecutable(executableName, executableDir); err != nil {
 				return err
 			}
@@ -106,6 +106,11 @@ func (engine *Engine) downloadTailwindExecutable(executableName string, executab
 	return nil
 }
 
+// githubRelease represents the structure of GitHub release API response
+type githubRelease struct {
+	Name string `json:"name"`
+}
+
 // getLatestTailwindVersion gets the latest tailwind release version from the github api
 func getLatestTailwindVersion() (string, error) {
 	resp, err := http.Get("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest")
@@ -114,12 +119,11 @@ func getLatestTailwindVersion() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
+	var release githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return "", err
 	}
-	version, err := jsonparser.GetString(respBody, "name")
-	return version, err
+	return release.Name, nil
 }
 
 // detectTailwindDownloadName detects the tailwind executable download name based on the OS and architecture

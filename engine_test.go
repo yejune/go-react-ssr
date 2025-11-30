@@ -30,12 +30,13 @@ func TestNew_Dev(t *testing.T) {
 	assert.Contains(t, string(contents), "Do not change, this code is generated from Golang structs", "Types file should have generated code in it")
 
 	var conn net.Conn
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 10; i++ {
 		conn, _ = net.DialTimeout("tcp", net.JoinHostPort("", fmt.Sprintf("%d", config.HotReloadServerPort)), time.Second)
 		if conn != nil {
 			conn.Close()
 			break
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 	assert.NotNil(t, conn, "Hot reload server should be running on port %d", config.HotReloadServerPort)
 

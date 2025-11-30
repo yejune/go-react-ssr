@@ -1,30 +1,31 @@
 package go_ssr
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
-	"github.com/natewong1313/go-react-ssr/internal/html"
-	"github.com/natewong1313/go-react-ssr/internal/utils"
-	"github.com/rs/zerolog"
 	"html/template"
-	"os"
 	"path/filepath"
-	"runtime"
+
+	"github.com/yejune/gotossr/internal/html"
+	"github.com/yejune/gotossr/internal/utils"
 )
 
 // RenderConfig is the config for rendering a route
 type RenderConfig struct {
-	File     string
-	Title    string
-	MetaTags map[string]string
-	Props    interface{}
+	File        string
+	Title       string
+	MetaTags    map[string]string
+	Props       interface{}
+	RequestPath string // Current request URL path for SPA routing (e.g., "/board/1")
 }
 
 // RenderRoute renders a route to html
 func (engine *Engine) RenderRoute(renderConfig RenderConfig) []byte {
-	// routeID is the program counter of the caller
-	pc, _, _, _ := runtime.Caller(1)
-	routeID := fmt.Sprint(pc)
+	filePath := filepath.ToSlash(utils.GetFullFilePath(engine.Config.FrontendDir + "/" + renderConfig.File))
+
+	// Generate stable routeID from file path (survives binary rebuilds)
+	routeID := generateRouteID(filePath)
 
 	props, err := propsToString(renderConfig.Props)
 	if err != nil {
@@ -32,10 +33,10 @@ func (engine *Engine) RenderRoute(renderConfig RenderConfig) []byte {
 	}
 	task := renderTask{
 		engine:   engine,
-		logger:   zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger(),
+		logger:   engine.Logger,
 		routeID:  routeID,
 		props:    props,
-		filePath: filepath.ToSlash(utils.GetFullFilePath(engine.Config.FrontendDir + "/" + renderConfig.File)),
+		filePath: filePath,
 		config:   renderConfig,
 	}
 	renderedHTML, css, js, err := task.Start()
@@ -50,6 +51,12 @@ func (engine *Engine) RenderRoute(renderConfig RenderConfig) []byte {
 		RouteID:    task.routeID,
 		ServerHTML: template.HTML(renderedHTML),
 	})
+}
+
+// generateRouteID creates a stable route ID from file path
+func generateRouteID(filePath string) string {
+	hash := sha256.Sum256([]byte(filePath))
+	return hex.EncodeToString(hash[:8]) // 16 char hex string
 }
 
 // Convert props to JSON string, or set to null if no props are passed

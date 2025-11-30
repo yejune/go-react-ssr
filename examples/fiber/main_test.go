@@ -14,13 +14,13 @@ func Test_main(t *testing.T) {
 	go main()
 	// Wait for server to start
 	for {
-		conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", "8080"), time.Millisecond*1000)
+		conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", "8081"), time.Millisecond*1000)
 		if conn != nil {
 			conn.Close()
 			break
 		}
 	}
-	res, err := http.Get("http://localhost:8080")
+	res, err := http.Get("http://localhost:8081")
 	assert.Nil(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 
