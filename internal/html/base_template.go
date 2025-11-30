@@ -10,9 +10,10 @@ const BaseTemplate = `<!DOCTYPE html>
 	{{range $k, $v := .OGMetaTags}} <meta property="{{$k}}" content="{{$v}}" /> {{end}}
 	{{range .Links}}<link href="{{.Href}}" rel="{{.Rel}}" media="{{.Media}}" hreflang="{{.Hreflang}}" type="{{.Type}}" title="{{.Title}}" />{{end}}
 	<link rel="icon" href="/favicon.ico" />
-	<style>
+	{{if .CSSPath}}<link rel="stylesheet" href="{{ .CSSPath }}" />
+	{{else}}<style>
 	  {{ .CSS }}}
-	</style>
+	</style>{{end}}
   </head>
   <body>
 	<div id="root">{{ .ServerHTML }}</div>
@@ -23,13 +24,14 @@ const BaseTemplate = `<!DOCTYPE html>
 		).innerHTML = '<div style="font-family: Helvetica; padding: 4px 16px"> <h1>An error occured</h1> <p style="color: red">'+error+'</p> </div>';
 	  }
 	</script>
-	<script type="module">
+	{{if .JSPath}}<script type="module" src="{{ .JSPath }}" onerror="showError('Failed to load script')"></script>
+	{{else}}<script type="module">
 	  try{
 		{{ .JS }}
 	  } catch (e) {
 		showError(e.stack)
 	  }
-	</script>
+	</script>{{end}}
 	{{if .IsDev}}
 	<script>
 	  let socket = new WebSocket("ws://127.0.0.1:3001/ws");

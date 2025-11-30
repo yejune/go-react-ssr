@@ -27,6 +27,10 @@ type Config struct {
 	// - "router": wraps with StaticRouter/BrowserRouter for true hydration (default, requires react-router-dom)
 	// - "replace": uses createRoot to replace SSR HTML (no hydration, compatible with any SPA structure)
 	SPAHydrationMode string // "router" or "replace", defaults to "router"
+	// External JS file options (for browser caching optimization):
+	// When StaticJSDir is set, JS bundles are written to files instead of inlined in HTML.
+	// This enables browser caching - the React library bundle rarely changes and can be cached.
+	StaticJSDir string // Directory to write JS files (e.g., "frontend/dist/assets"). If empty, JS is inlined.
 }
 
 // Validate validates the config
@@ -58,6 +62,13 @@ func (c *Config) Validate() error {
 	// Default SPA hydration mode to "router" for true hydration with React Router
 	if c.ClientAppPath != "" && c.SPAHydrationMode == "" {
 		c.SPAHydrationMode = "router"
+	}
+	// Create StaticJSDir if specified
+	if c.StaticJSDir != "" {
+		c.StaticJSDir = utils.GetFullFilePath(c.StaticJSDir)
+		if err := os.MkdirAll(c.StaticJSDir, 0755); err != nil {
+			return fmt.Errorf("failed to create static js dir at %s: %w", c.StaticJSDir, err)
+		}
 	}
 	c.setFilePaths()
 	return nil
