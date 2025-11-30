@@ -6,8 +6,9 @@ import "sync"
 type RuntimeType string
 
 const (
-	RuntimeQuickJS RuntimeType = "quickjs"
-	RuntimeV8      RuntimeType = "v8"
+	RuntimeQuickJS   RuntimeType = "quickjs"
+	RuntimeV8        RuntimeType = "v8"
+	RuntimeModerncJS RuntimeType = "moderncjs"
 )
 
 // defaultRuntimeType is set by init() in the build-specific files
@@ -17,6 +18,9 @@ var defaultRuntimeType RuntimeType
 type JSRuntime interface {
 	// Execute runs JavaScript code and returns the result as a string
 	Execute(code string) (string, error)
+	// ExecuteWithProps runs a cached bundle with props injected
+	// The bundle is compiled once and cached; only props change per request
+	ExecuteWithProps(bundle, propsJSON string) (string, error)
 	// Close releases resources (called when returning to pool)
 	Reset()
 	// Destroy permanently destroys the runtime
@@ -91,14 +95,11 @@ func (p *Pool) createRuntime() JSRuntime {
 }
 
 // Get retrieves a runtime from the pool
+// Blocks if pool is empty - never creates additional runtimes beyond pool size
+// This is critical for v8go safety: concurrent Isolate creation causes crashes
 func (p *Pool) Get() JSRuntime {
-	select {
-	case rt := <-p.pool:
-		return rt
-	default:
-		// Pool is empty, create a new one
-		return p.createRuntime()
-	}
+	// Blocking read - wait for available runtime
+	return <-p.pool
 }
 
 // Put returns a runtime to the pool
@@ -127,6 +128,13 @@ func (p *Pool) Execute(code string) (string, error) {
 	rt := p.Get()
 	defer p.Put(rt)
 	return rt.Execute(code)
+}
+
+// ExecuteWithProps executes a cached bundle with props
+func (p *Pool) ExecuteWithProps(bundle, propsJSON string) (string, error) {
+	rt := p.Get()
+	defer p.Put(rt)
+	return rt.ExecuteWithProps(bundle, propsJSON)
 }
 
 // Stats returns pool statistics

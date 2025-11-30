@@ -72,9 +72,9 @@ func (rt *renderTask) doRender(buildType string) {
 		return
 	}
 	if buildType == "server" && rt.engine.CachedServerSPAJS != "" {
-		// Inject props with __requestPath for StaticRouter
-		js := injectSPAProps(rt.engine.CachedServerSPAJS, rt.config.RequestPath)
-		renderedHTML, err := rt.renderReactToHTML(js)
+		// Use cached bundle with props injection for optimal performance
+		propsJSON := fmt.Sprintf(`{ "__requestPath": "%s" }`, rt.config.RequestPath)
+		renderedHTML, err := rt.renderReactToHTMLWithProps(rt.engine.CachedServerSPAJS, propsJSON)
 		if err != nil {
 			rt.logger.Error("SPA server render error", "error", err, "requestPath", rt.config.RequestPath)
 		}
@@ -182,6 +182,12 @@ func injectSPAProps(compiledJS, requestPath string) string {
 // renderReactToHTML executes the server JS using the pooled runtime
 func (rt *renderTask) renderReactToHTML(js string) (string, error) {
 	return rt.engine.RuntimePool.Execute(js)
+}
+
+// renderReactToHTMLWithProps executes the server JS with cached bundle + props
+// The bundle is compiled once and cached; only props change per request
+func (rt *renderTask) renderReactToHTMLWithProps(bundle, propsJSON string) (string, error) {
+	return rt.engine.RuntimePool.ExecuteWithProps(bundle, propsJSON)
 }
 
 // renderReactToHTMLWithPool is a package-level function for backward compatibility
