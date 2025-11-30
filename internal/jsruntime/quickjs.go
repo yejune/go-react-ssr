@@ -43,15 +43,26 @@ func (q *QuickJSRuntime) Execute(code string) (string, error) {
 	return res.String(), nil
 }
 
-// Reset prepares the runtime for reuse
-// QuickJS contexts can accumulate state, so we recreate the context
-func (q *QuickJSRuntime) Reset() {
-	// Close old context and create a new one
-	// This clears any global state from previous executions
-	if q.context != nil {
-		q.context.Close()
+// Preload runs JavaScript code without returning a result
+// Used to load heavy bundles once per runtime
+func (q *QuickJSRuntime) Preload(code string) error {
+	res := q.context.Eval(code)
+	defer res.Free()
+
+	if res.IsException() {
+		return res.Error()
 	}
-	q.context = q.runtime.NewContext()
+	return nil
+}
+
+// Reset prepares the runtime for reuse
+// Instead of recreating context (expensive), we clear only per-request state
+// Note: __ssrRender is the preloaded render function - DO NOT delete it
+func (q *QuickJSRuntime) Reset() {
+	// Clear only per-request globals, keep preloaded bundle
+	q.context.Eval(`
+		globalThis.__ssr_errors = [];
+	`)
 }
 
 // Destroy permanently destroys the runtime
