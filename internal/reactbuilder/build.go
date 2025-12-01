@@ -27,6 +27,7 @@ var textEncoderPolyfill = `function TextEncoder(){}TextEncoder.prototype.encode=
 var processPolyfill = `var process = {env: {NODE_ENV: "production"}};`
 var consolePolyfill = `globalThis.__ssr_errors=[];var console = {log: function(){},warn: function(){},error: function(){var a=Array.prototype.slice.call(arguments);globalThis.__ssr_errors.push(a.map(function(x){return x&&x.stack?x.stack:String(x)}).join(' '));}};`
 var urlPolyfill = `if(typeof URL==="undefined"){function URL(u,b){if(b&&u.indexOf("://")===-1){u=b.replace(/\/$/,"")+"/"+u.replace(/^\//,"")}var m=u.match(/^(([^:/?#]+):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/);this.href=u;this.protocol=(m[2]||"")+ ":";this.host=m[4]||"";this.hostname=this.host.split(":")[0];this.port=this.host.split(":")[1]||"";this.pathname=m[5]||"/";this.search=m[6]||"";this.hash=m[8]||"";this.origin=this.protocol+"//"+this.host}URL.prototype.toString=function(){return this.href}}`
+var messageChannelPolyfill = `if(typeof MessageChannel==="undefined"){function MessageChannel(){var self=this;this.port1={postMessage:function(msg){if(self.port2.onmessage)setTimeout(function(){self.port2.onmessage({data:msg})},0)}};this.port2={postMessage:function(msg){if(self.port1.onmessage)setTimeout(function(){self.port1.onmessage({data:msg})},0)}}}}`
 
 type BuildResult struct {
 	JS           string
@@ -55,7 +56,7 @@ func BuildServer(buildContents, frontendDir, assetRoute string) (BuildResult, er
 		LegalComments: esbuildApi.LegalCommentsNone,
 		// We can inject the polyfills at the top of the generated js
 		Banner: map[string]string{
-			"js": globalThisPolyfill + urlPolyfill + textEncoderPolyfill + processPolyfill + consolePolyfill,
+			"js": globalThisPolyfill + urlPolyfill + textEncoderPolyfill + messageChannelPolyfill + processPolyfill + consolePolyfill,
 		},
 		// Footer returns globalThis.__ssr_result - never affected by minification
 		// Also prepends any console.error messages as HTML comment for debugging
