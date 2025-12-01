@@ -33,6 +33,10 @@ type Config struct {
 	// This enables browser caching - the React library bundle rarely changes and can be cached.
 	StaticJSDir string // Directory to write JS files (e.g., "frontend/dist/assets"). If empty, JS is inlined.
 	IsDev       bool   // Development mode - enables hot reload, disables caching
+
+	// Generators are custom code generators that run during engine initialization (dev mode only)
+	// Use this to generate routes, API clients, or any other code based on the SSR configuration
+	Generators []Generator
 }
 
 // Validate validates the config

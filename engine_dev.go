@@ -8,7 +8,7 @@ import (
 	"github.com/yejune/gotossr/internal/typeconverter"
 )
 
-// initDevTools initializes development tools (hot reload, type converter)
+// initDevTools initializes development tools (hot reload, type converter, custom generators)
 func (engine *Engine) initDevTools() error {
 	// If running in production mode (APP_ENV), skip dev tools
 	if os.Getenv("APP_ENV") == "production" {
@@ -23,6 +23,17 @@ func (engine *Engine) initDevTools() error {
 	if err := typeconverter.Start(engine.Config.PropsStructsPath, engine.Config.GeneratedTypesPath); err != nil {
 		engine.Logger.Error("Failed to init type converter", "error", err)
 		return err
+	}
+
+	// Run custom generators
+	if len(engine.Config.Generators) > 0 {
+		engine.Logger.Debug("Running custom generators", "count", len(engine.Config.Generators))
+		for _, gen := range engine.Config.Generators {
+			if err := gen.Generate(engine.Config); err != nil {
+				engine.Logger.Error("Failed to run generator", "error", err)
+				return err
+			}
+		}
 	}
 
 	engine.Logger.Debug("Starting hot reload server")
