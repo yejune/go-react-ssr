@@ -1,6 +1,10 @@
 package reactbuilder
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -70,12 +74,46 @@ func GenerateClientBuildContents(imports []string, filePath string, useLayout bo
 	return buildWithTemplate(baseTemplate, params)
 }
 
+// getReactRouterMajorVersion reads package.json and returns react-router-dom major version
+func getReactRouterMajorVersion(frontendDir string) int {
+	pkgPath := filepath.Join(frontendDir, "package.json")
+	data, err := os.ReadFile(pkgPath)
+	if err != nil {
+		return 6 // default to v6
+	}
+	var pkg struct {
+		Dependencies map[string]string `json:"dependencies"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return 6
+	}
+	version := pkg.Dependencies["react-router-dom"]
+	if version == "" {
+		return 6
+	}
+	// Remove ^ or ~ prefix and get major version
+	version = strings.TrimLeft(version, "^~")
+	parts := strings.Split(version, ".")
+	if len(parts) > 0 {
+		major, err := strconv.Atoi(parts[0])
+		if err == nil {
+			return major
+		}
+	}
+	return 6
+}
+
 // GenerateServerSPABuildContents generates server build for SPA apps
 // mode: "router" uses StaticRouter for true hydration, "replace" uses page component rendering
-func GenerateServerSPABuildContents(imports []string, appPath string, mode string) (string, error) {
+func GenerateServerSPABuildContents(imports []string, appPath string, mode string, frontendDir string) (string, error) {
 	if mode == "router" {
 		imports = append(imports, `import { renderToString } from "react-dom/server.browser";`)
-		imports = append(imports, `import { StaticRouter } from "react-router-dom/server";`)
+		// react-router-dom v7+ uses "react-router" for StaticRouter, v6 uses "react-router-dom/server"
+		if getReactRouterMajorVersion(frontendDir) >= 7 {
+			imports = append(imports, `import { StaticRouter } from "react-router";`)
+		} else {
+			imports = append(imports, `import { StaticRouter } from "react-router-dom/server";`)
+		}
 		params := map[string]interface{}{
 			"Imports":            imports,
 			"FilePath":           appPath,

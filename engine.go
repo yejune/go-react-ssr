@@ -130,7 +130,7 @@ func (engine *Engine) buildServerSPAApp() error {
 		imports = append(imports, `import "`+engine.CachedLayoutCSSFilePath+`";`)
 	}
 
-	buildContents, err := reactbuilder.GenerateServerSPABuildContents(imports, engine.Config.ClientAppPath, engine.Config.SPAHydrationMode)
+	buildContents, err := reactbuilder.GenerateServerSPABuildContents(imports, engine.Config.ClientAppPath, engine.Config.SPAHydrationMode, engine.Config.FrontendDir)
 	if err != nil {
 		return err
 	}
