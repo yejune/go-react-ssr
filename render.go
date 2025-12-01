@@ -64,18 +64,23 @@ func (engine *Engine) RenderRoute(renderConfig RenderConfig) []byte {
 		PropsJSON:  template.JS(propsWithRequestPath), // SSR props for client hydration (with __requestPath)
 	}
 
-	// External JS file mode: write JS to file and use <script src>
+	// External JS/CSS file mode: write to files and use <script src>/<link href>
 	if engine.Config.StaticJSDir != "" && !engine.Config.IsDev {
 		jsPath, err := engine.writeStaticJS(js, routeID)
 		if err != nil {
 			engine.Logger.Error("Failed to write static JS", "error", err)
-			// Fallback to inline
 			params.JS = template.JS(js)
 		} else {
 			params.JSPath = jsPath
 		}
-		// CSS도 외부 파일로 (TODO: 별도 구현 가능)
-		params.CSS = template.CSS(css)
+		// CSS도 외부 파일로 분리
+		cssPath, err := engine.writeStaticCSS(css, routeID)
+		if err != nil {
+			engine.Logger.Error("Failed to write static CSS", "error", err)
+			params.CSS = template.CSS(css)
+		} else {
+			params.CSSPath = cssPath
+		}
 	} else {
 		// Inline mode (default)
 		params.JS = template.JS(js)
@@ -107,6 +112,30 @@ func (engine *Engine) writeStaticJS(js string, routeID string) (string, error) {
 	}
 
 	engine.Logger.Info("Written static JS file", "path", filePath, "size", len(js))
+	return engine.Config.AssetRoute + "/" + filename, nil
+}
+
+// writeStaticCSS writes CSS to a file and returns the URL path
+func (engine *Engine) writeStaticCSS(css string, routeID string) (string, error) {
+	// Generate hash from CSS content for cache busting
+	hash := sha256.Sum256([]byte(css))
+	hashStr := hex.EncodeToString(hash[:8])
+
+	// Filename: styles-{routeID}.{hash}.css
+	filename := fmt.Sprintf("styles-%s.%s.css", routeID[:8], hashStr)
+	filePath := path.Join(engine.Config.StaticJSDir, filename)
+
+	// Check if file already exists (same content)
+	if _, err := os.Stat(filePath); err == nil {
+		return engine.Config.AssetRoute + "/" + filename, nil
+	}
+
+	// Write CSS to file
+	if err := os.WriteFile(filePath, []byte(css), 0644); err != nil {
+		return "", fmt.Errorf("failed to write CSS file: %w", err)
+	}
+
+	engine.Logger.Info("Written static CSS file", "path", filePath, "size", len(css))
 	return engine.Config.AssetRoute + "/" + filename, nil
 }
 
